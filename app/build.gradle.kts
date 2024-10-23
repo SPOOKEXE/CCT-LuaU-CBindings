@@ -35,7 +35,7 @@ val outputDir = layout.buildDirectory.dir("luau")
 tasks.register<Exec>("cloneLuauRepo") {
 	// Use layout.buildDirectory instead of buildDir
 	val destinationDir = File(layout.buildDirectory.asFile.get(), "luau")
-	
+
 	doFirst {
 		if (destinationDir.exists()) {
 			destinationDir.deleteRecursively()
@@ -55,51 +55,41 @@ tasks.register<Exec>("buildLuaU") {
 	commandLine("make")
 }
 
-tasks.register<Copy>("cloneCompiler") {
-	//dependsOn("buildLuaU") // Ensure this task runs after building LuaU
-
-	val luaUPath = outputDir.get().asFile
-	val includeSrcDir = File(luaUPath, "Compiler/include")
-	val includeDestDir = File("app/cpp/include")
-
-	val srcDir = File(luaUPath, "Compiler/src")
-	val srcDestDir = File("app/cpp/src")
-
-	includeDestDir.mkdirs()
-	srcDestDir.mkdirs()
-
-	// Copy Compiler header files
-	from(File(includeSrcDir, "Compiler")) {
-		into(includeDestDir)
+tasks.register<Copy>("cloneLuaU_VMsrc") {
+	from("build/luau/VM/src") {
+		include("**/*")
 	}
-
-	// Copy Compiler source files
-	from(File(srcDir, "Compiler")) {
-		into(srcDestDir)
-	}
+	into("cpp/src")
 }
 
-// Task to clone VM files
-tasks.register<Copy>("cloneVM") {
-	//dependsOn("buildLuaU") // Ensure this task runs after building LuaU
-
-	val luaUPath = outputDir.get().asFile
-	val includeSrcDir = File(luaUPath, "VM/include")
-	val includeDestDir = File("app/cpp/include")
-
-	val srcDir = File(luaUPath, "VM/src")
-	val srcDestDir = File("app/cpp/src")
-
-	includeDestDir.mkdirs()
-	srcDestDir.mkdirs()
-
-	// Copy VM header files
-	from(File(includeSrcDir, "VM")) {
-		into(includeDestDir)
+tasks.register<Copy>("cloneLuaU_VMinclude") {
+	from("build/luau/VM/include") {
+		include("**/*")
 	}
-
-	// Copy VM source files
-	from(File(srcDir, "VM")) {
-		into(srcDestDir)
-	}
+	into("cpp/include")
 }
+
+tasks.register<Copy>("cloneLuaU_CompilerSrc") {
+	from("build/luau/Compiler/src") {
+		include("**/*")
+	}
+	into("cpp/src")
+}
+
+tasks.register<Copy>("cloneLuaU_CompilerInclude") {
+	from("build/luau/Compiler/include") {
+		include("**/*")
+	}
+	into("cpp/include")
+}
+
+// Task to clone luau compiled files
+tasks.register("cloneLuaU") {
+
+}
+
+tasks.getByName("cloneLuaU").dependsOn("cloneLuaU_VMsrc")
+tasks.getByName("cloneLuaU").dependsOn("cloneLuaU_VMinclude")
+tasks.getByName("cloneLuaU").dependsOn("cloneLuaU_CompilerSrc")
+tasks.getByName("cloneLuaU").dependsOn("cloneLuaU_CompilerInclude")
+tasks.getByName("build").dependsOn("cloneLuaU")
